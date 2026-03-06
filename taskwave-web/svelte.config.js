@@ -1,11 +1,10 @@
-import adapter from '@sveltejs/adapter-netlify';
+import adapter from '@sveltejs/adapter-static';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	kit: {
 		adapter: adapter({
-			edge: false,       // use standard Node.js functions
-			split: false       // single function for all routes
+			fallback: '200.html'  // SPA mode — all routes handled client-side
 		})
 	}
 };
