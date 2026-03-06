@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { API_BASE } from "$lib/config";
 
   let dragOver = false;
   let selectedFile: File | null = null;
@@ -53,7 +54,7 @@
       form.append("mode", mode);
       form.append("dodAc", String(includeDodAc));
 
-      const res = await fetch("http://localhost:5000/api/jobs", {
+      const res = await fetch(`${API_BASE}/api/jobs`, {
         method: "POST",
         body: form,
       });

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { onMount } from "svelte";
+  import { API_BASE } from "$lib/config";
 
   const jobId = $page.params.jobId;
   const isDemo = jobId === "demo-job";
@@ -49,7 +50,7 @@
 
     // Fetch real result from API
     try {
-      const res = await fetch(`http://localhost:5000/api/jobs/${jobId}/result`);
+      const res = await fetch(`${API_BASE}/api/jobs/${jobId}/result`);
       if (res.status === 202) {
         error = "Документ ещё генерируется. Подождите...";
         loading = false;

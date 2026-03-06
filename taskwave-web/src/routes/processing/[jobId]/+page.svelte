@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import { API_BASE } from "$lib/config";
 
   const jobId = $page.params.jobId;
   const isDemo = jobId === "demo-job";
@@ -94,9 +95,7 @@
 
   // ── Real SSE ─────────────────────────────────────────────────────────────────
   function connectSSE() {
-    evtSource = new EventSource(
-      `http://localhost:5000/api/jobs/${jobId}/stream`,
-    );
+    evtSource = new EventSource(`${API_BASE}/api/jobs/${jobId}/stream`);
 
     evtSource.onmessage = (e) => {
       try {
