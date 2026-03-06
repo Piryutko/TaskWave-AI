@@ -1,0 +1,66 @@
+# ─── .NET Build Output ────────────────────────────────────────────────────────
+bin/
+obj/
+out/
+publish/
+
+# ─── Whisper Model Files (large binaries — download via app) ──────────────────
+*.bin
+# Uncomment below if you ever want to commit tiny test models explicitly:
+# !ggml-tiny.bin
+
+# ─── Temporary & Download Files ───────────────────────────────────────────────
+*.tmp
+*.temp
+*.part
+
+# ─── Generated Output Documents ───────────────────────────────────────────────
+AudioPM_*.txt
+
+# ─── NuGet ────────────────────────────────────────────────────────────────────
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+nuget.config.local
+
+# ─── Visual Studio ────────────────────────────────────────────────────────────
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vcxproj.filters
+_ReSharper*/
+*.DotSettings.user
+
+# ─── JetBrains Rider ──────────────────────────────────────────────────────────
+.idea/
+*.sln.iml
+
+# ─── VS Code ──────────────────────────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ─── OS Files ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── User Secrets & Environment ───────────────────────────────────────────────
+appsettings.local.json
+appsettings.Development.json
+secrets.json
+.env
+.env.local
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Test Results ─────────────────────────────────────────────────────────────
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
