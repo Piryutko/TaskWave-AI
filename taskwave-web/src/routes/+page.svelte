@@ -84,7 +84,7 @@
                animate-slide-up"
       style="animation-delay:0.1s; line-height:1.1;"
     >
-      Митинги —<br />
+      Встречи —<br />
       <span
         style="background: linear-gradient(135deg,#7c3aed,#22d3ee);
                    -webkit-background-clip:text; -webkit-text-fill-color:transparent;"
