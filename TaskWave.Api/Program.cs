@@ -26,7 +26,11 @@ builder.Services.Configure<FormOptions>(o =>
 // CORS — allow SvelteKit dev server + production
 builder.Services.AddCors(opts =>
     opts.AddDefaultPolicy(p =>
-        p.WithOrigins("http://localhost:5173", "https://taskwave.io")
+        p.WithOrigins(
+            "http://localhost:5173",
+            "https://taskwave-ai.netlify.app",
+            "https://taskwave.io")
+         .SetIsOriginAllowedToAllowWildcardSubdomains()
          .AllowAnyMethod()
          .AllowAnyHeader()
          .AllowCredentials()));
