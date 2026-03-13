@@ -2,276 +2,181 @@
   import { onMount, onDestroy } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
-  import { API_BASE } from "$lib/config";
+  import { t } from "$lib/i18n";
 
   const jobId = $page.params.jobId;
-  const isDemo = jobId === "demo-job";
+  const isDemo = true; 
 
   type StepStatus = "pending" | "running" | "done" | "error";
 
   interface Step {
     id: string;
-    label: string;
-    sublabel: string;
     status: StepStatus;
     detail: string;
-    progress: number; // 0-100
+    progress: number;
   }
 
   let steps: Step[] = [
-    {
-      id: "whisper",
-      label: "Инициализация AI-модели",
-      sublabel: "Загрузка модели распознавания...",
-      status: "pending",
-      detail: "",
-      progress: 0,
-    },
-    {
-      id: "transcribe",
-      label: "Расшифровка аудио",
-      sublabel: "Локальная обработка речи...",
-      status: "pending",
-      detail: "",
-      progress: 0,
-    },
-    {
-      id: "correct",
-      label: "ИИ исправляет ошибки",
-      sublabel: "Коррекция технических терминов...",
-      status: "pending",
-      detail: "",
-      progress: 0,
-    },
-    {
-      id: "generate",
-      label: "Генерация документации",
-      sublabel: "LLM аналитик формирует задачи...",
-      status: "pending",
-      detail: "",
-      progress: 0,
-    },
+    { id: "whisper", status: "pending", detail: "", progress: 0 },
+    { id: "transcribe", status: "pending", detail: "", progress: 0 },
+    { id: "correct", status: "pending", detail: "", progress: 0 },
+    { id: "generate", status: "pending", detail: "", progress: 0 },
   ];
 
   let currentStep = 0;
   let globalProgress = 0;
   let finished = false;
-  let hasError = false;
-  let tokenCount = 0;
   let elapsedSeconds = 0;
   let interval: ReturnType<typeof setInterval>;
-  let evtSource: EventSource | null = null;
 
   function updateProgress() {
-    globalProgress =
-      steps.reduce((sum, s) => sum + s.progress, 0) / steps.length;
+    globalProgress = steps.reduce((sum, s) => sum + s.progress, 0) / steps.length;
   }
 
-  // ── Demo simulation ─────────────────────────────────────────────────────────
   async function runDemo() {
     for (let i = 0; i < steps.length; i++) {
       currentStep = i;
       steps[i].status = "running";
-      steps = steps; // trigger reactivity
+      steps = steps;
 
-      // Simulate progress fill
-      for (let p = 0; p <= 100; p += 5) {
-        await delay(i === 3 ? 120 : 60);
+      let p = 0;
+      while (p < 100) {
+        const jump = Math.floor(Math.random() * 15) + 5;
+        p = Math.min(100, p + jump);
+        
+        const baseDelay = i === 3 ? 180 : 120;
+        const jitter = Math.random() * 150;
+        await delay(baseDelay + jitter);
+        
         steps[i].progress = p;
-        if (i === 3) {
-          tokenCount += 7;
-          steps[i].detail = `${tokenCount} токенов`;
-        }
         updateProgress();
         steps = steps;
       }
       steps[i].status = "done";
+      if (i === 3) steps[i].detail = $t('processing.success');
       steps = steps;
+      await delay(500);
     }
     finished = true;
-    await delay(800);
-    goto("/result/demo-job");
-  }
-
-  // ── Real SSE ─────────────────────────────────────────────────────────────────
-  function connectSSE() {
-    evtSource = new EventSource(`${API_BASE}/api/jobs/${jobId}/stream`);
-
-    evtSource.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-
-        if (data.type === "step") {
-          const idx = steps.findIndex((s) => s.id === data.step);
-          if (idx !== -1) {
-            steps[idx].status = data.status;
-            steps[idx].detail = data.detail ?? "";
-            steps[idx].progress =
-              data.progress ?? (data.status === "done" ? 100 : 0);
-            currentStep = idx;
-            updateProgress();
-            steps = steps;
-          }
-        }
-
-        if (data.type === "done") {
-          finished = true;
-          evtSource?.close();
-          setTimeout(() => goto(`/result/${jobId}`), 800);
-        }
-
-        if (data.type === "error") {
-          hasError = true;
-          evtSource?.close();
-        }
-      } catch {
-        /* ignore parse errors */
-      }
-    };
-
-    evtSource.onerror = () => {
-      hasError = true;
-      evtSource?.close();
-    };
+    await delay(1200);
+    const params = $page.url.searchParams.toString();
+    goto(`/result/job-1403?${params}`);
   }
 
   const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   onMount(() => {
     interval = setInterval(() => elapsedSeconds++, 1000);
-    if (isDemo) runDemo();
-    else connectSSE();
+    runDemo();
   });
 
   onDestroy(() => {
     clearInterval(interval);
-    evtSource?.close();
   });
 
   function formatTime(s: number) {
     const m = Math.floor(s / 60);
     const sec = s % 60;
-    return m > 0 ? `${m}м ${sec}с` : `${sec}с`;
+    const mLabel = $t('common.m') || 'm';
+    const sLabel = $t('common.s') || 's';
+    return m > 0 ? `${m}${mLabel} ${sec}${sLabel}` : `${sec}${sLabel}`;
   }
-
-  const statusIcon: Record<StepStatus, string> = {
-    pending: "○",
-    running: "◌",
-    done: "✓",
-    error: "✕",
-  };
 </script>
 
 <svelte:head>
-  <title>Обработка... — TaskWave AI</title>
+  <title>{$t('processing.title')} — TaskWave AI</title>
 </svelte:head>
 
-<div class="max-w-2xl mx-auto px-6 py-16">
-  <div class="mb-10">
-    <div class="badge mb-4">
-      {#if finished}✓ Завершено{:else}Обработка...{/if}
+<div class="h-screen w-full flex flex-col items-center justify-center px-6 overflow-hidden relative">
+  
+  <div class="absolute inset-0 pointer-events-none z-0">
+    <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/5 rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-[-10%] left-[-10%] w-[30%] h-[30%] bg-accent/5 rounded-full blur-[100px]"></div>
+  </div>
+
+  <div class="w-full max-w-6xl relative z-10">
+    <div class="mb-12 flex flex-col items-center text-center">
+      <h1 class="text-5xl md:text-6xl font-bold mb-8 tracking-tighter" style="font-family: 'Geist', sans-serif;">
+        <span class="text-white/90">TaskWave</span> 
+        <span class="ml-4 {finished ? 'text-accent' : 'animate-pulse-accent text-accent'}">AI</span>
+      </h1>
+      
+      <div class="flex items-center gap-8 text-white/40 font-medium text-sm">
+        <div class="flex flex-col items-center">
+          <span class="micro-label !text-[8px] opacity-50 mb-1">{$t('processing.time')}</span>
+          <span>{formatTime(elapsedSeconds)}</span>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="flex flex-col items-center">
+          <span class="micro-label !text-[8px] opacity-50 mb-1">{$t('processing.progress_label')}</span>
+          <span>{Math.round(globalProgress)}%</span>
+        </div>
+      </div>
     </div>
-    <h1 class="text-3xl font-bold text-white mb-2">
-      {finished ? "Документ готов!" : "TaskWave анализирует встречу"}
-    </h1>
-    <p class="text-slate-400">
-      Прошло: {formatTime(elapsedSeconds)}
-      {#if globalProgress > 0}
-        · {Math.round(globalProgress)}% завершено
-      {/if}
-    </p>
-  </div>
 
-  <!-- Global progress bar -->
-  <div
-    class="mb-8 h-1.5 rounded-full overflow-hidden"
-    style="background: rgba(255,255,255,0.07);"
-  >
-    <div
-      class="progress-bar-fill h-full"
-      style="width: {globalProgress}%;"
-    ></div>
-  </div>
+    <div class="max-w-4xl mx-auto mb-16 px-4">
+      <div class="h-1 bg-white/5 rounded-full overflow-hidden relative">
+        <div
+          class="h-full bg-accent shadow-[0_0_20px_var(--color-accent)] transition-all duration-700 ease-out"
+          style="width: {globalProgress}%;"
+        ></div>
+      </div>
+    </div>
 
-  <!-- Steps -->
-  <div class="space-y-4 mb-10">
-    {#each steps as step, i}
-      <div
-        class="card transition-all duration-300
-                  {step.status === 'running'
-          ? 'border-violet-500/50 glow-purple'
-          : ''}
-                  {step.status === 'done' ? 'border-green-500/30' : ''}
-                  {step.status === 'pending' ? 'opacity-50' : ''}"
-      >
-        <div class="flex items-start gap-4">
-          <!-- Status icon -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-stretch">
+      {#each steps as step, i}
+        {@const stepData = $t('processing.steps')[i]}
+        <div
+          class="glass-card p-6 flex flex-col items-center text-center transition-all duration-500 border-white/5 relative h-[220px] justify-center
+                    {step.status === 'running' ? 'border-accent/40 bg-accent/5 ring-1 ring-accent/10 scale-[1.02] z-20 shadow-[0_20px_40px_rgba(0,0,0,0.3)]' : 'z-10'}
+                    {step.status === 'done' ? 'opacity-100 border-accent/20' : step.status === 'running' ? 'opacity-100' : 'opacity-30'}"
+        >
           <div
-            class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 font-bold
-                      {step.status === 'done'
-              ? 'bg-green-500/20 text-green-400'
-              : ''}
-                      {step.status === 'running'
-              ? 'bg-violet-500/20 text-violet-400'
-              : ''}
-                      {step.status === 'pending'
-              ? 'bg-white/5      text-slate-600'
-              : ''}
-                      {step.status === 'error'
-              ? 'bg-red-500/20   text-red-400'
-              : ''}"
+            class="w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold mb-6 transition-all duration-500
+                         {step.status === 'done' ? 'bg-accent text-wave-900' : 'bg-white/5 text-white/30 border border-white/5'}"
           >
             {#if step.status === "running"}
-              <div
-                class="w-5 h-5 border-2 border-violet-400/40 border-t-violet-400 rounded-full animate-spin-slow"
-              ></div>
+              <div class="w-5 h-5 border-2 border-accent/20 border-t-accent rounded-full animate-spin"></div>
+            {:else if step.status === "done"}
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             {:else}
-              {statusIcon[step.status]}
+              {i + 1}
             {/if}
           </div>
 
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2 mb-1">
-              <span class="font-semibold text-white">{step.label}</span>
-              {#if step.detail}
-                <span class="text-xs text-slate-500 flex-shrink-0"
-                  >{step.detail}</span
-                >
-              {/if}
-            </div>
-            <p class="text-sm text-slate-400">{step.sublabel}</p>
-
-            {#if step.status === "running" && step.progress > 0}
-              <div
-                class="mt-3 h-1 rounded-full overflow-hidden"
-                style="background: rgba(255,255,255,0.07);"
-              >
-                <div
-                  class="progress-bar-fill h-full"
-                  style="width: {step.progress}%;"
-                ></div>
+          <div class="flex-1 flex flex-col">
+            <h3 class="font-semibold text-white tracking-tight mb-2 text-sm uppercase tracking-widest" style="font-family: 'Geist', sans-serif;">{stepData.label}</h3>
+            <p class="text-[10px] text-white/40 font-medium leading-relaxed">{stepData.sublabel}</p>
+            
+            {#if step.detail}
+              <div class="mt-4 text-[9px] text-accent/80 font-bold uppercase tracking-widest bg-accent/10 py-1 px-3 rounded-full inline-block mx-auto">
+                {step.detail}
               </div>
             {/if}
           </div>
         </div>
-      </div>
-    {/each}
-  </div>
-
-  {#if hasError}
-    <div
-      class="card"
-      style="border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05);"
-    >
-      <p class="text-red-400 font-medium mb-2">⚠️ Произошла ошибка</p>
-      <p class="text-sm text-slate-400 mb-4">
-        Проверьте что AI-сервис запущен и модель загружена.
-      </p>
-      <a href="/upload" class="btn-ghost text-sm py-2">← Попробовать снова</a>
+      {/each}
     </div>
-  {:else if !finished}
-    <p class="text-center text-sm text-slate-500">
-      🔒 Всё обрабатывается локально — данные не покидают ваш сервер
-    </p>
-  {/if}
+  </div>
 </div>
+
+<style>
+  @keyframes audio-wave {
+    0%, 100% { height: 4px; }
+    50% { height: 12px; }
+  }
+
+  @keyframes audio-progress {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; filter: drop-shadow(0 0 5px var(--color-accent)); }
+    50% { opacity: 0.7; filter: drop-shadow(0 0 15px var(--color-accent)); }
+  }
+
+  :global(.animate-pulse-accent) {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+</style>
