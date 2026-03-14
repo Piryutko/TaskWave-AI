@@ -230,8 +230,8 @@
                           on:click={() => toggleTask(epicIdx, taskIdx)}
                           class="w-full glass-card p-5 text-left border-white/5 hover:border-accent/40 transition-all duration-300 relative
                                  {task.expanded
-                            ? 'bg-white/[0.05] border-accent/30 shadow-[0_10px_30px_rgba(0,0,0,0.2)]'
-                            : 'bg-white/[0.02]'}"
+                            ? 'bg-wave-800/90 border-accent/30 shadow-[0_10px_30px_rgba(0,0,0,0.2)]'
+                            : 'bg-wave-900/60 backdrop-blur-xl hover:bg-wave-800/40'}"
                         >
                           <div class="flex items-start justify-between gap-4">
                             <div class="flex-1">
