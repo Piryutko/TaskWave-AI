@@ -31,6 +31,7 @@ export const translations: Record<string, any> = {
       main: 'Основные',
       m: 'м',
       s: 'с',
+      attendees: 'Участники',
     },
     meetings: {
       daily: { title: 'Дейлик команды TimeWave', desc: 'Разбор текущих блокировок и инсайдов. Формирование оперативного бэклога.' },
@@ -252,6 +253,7 @@ export const translations: Record<string, any> = {
       main: 'Main',
       m: 'm',
       s: 's',
+      attendees: 'Attendees',
     },
     meetings: {
       daily: { title: 'TimeWave Team Daily', desc: 'Review current blockers and insights. Forming the operational backlog.' },
@@ -467,6 +469,7 @@ export const translations: Record<string, any> = {
       main: 'メイン',
       m: '分',
       s: '秒',
+      attendees: '参加者',
     },
     meetings: {
       daily: { title: 'TimeWaveチームデイリー', desc: '現在のブロッカーとインサイトを確認します。運用バックログの形成。' },
